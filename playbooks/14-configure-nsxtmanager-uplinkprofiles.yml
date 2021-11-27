@@ -1,0 +1,89 @@
+##
+##    Project: SDDC-NSXT-LAB
+##    Authors: Sachin Kumar Sharma
+##    Filename: playbooks/14-configure-nsxtmanager-uplinkprofiles.yml
+##    Purpose: This Ansbile script is to create uplink profiles
+##
+##
+---
+- hosts: localhost
+  name: Create NSX-T Uplink profiles (Compute - Edge)
+  gather_facts: false
+  vars_files: ../answerfile.yml
+
+  tasks:
+    - name: createNsxUplinkProfiles_Playbook
+      ansible.builtin.debug:
+        msg: "Starting playbook: {{ ansible_play_name }}"
+    - name: Create a Hostswitch Profile - COMPUTE-CLUSTER-A
+      nsxt_uplink_profiles:
+          hostname: "{{ NSXT.hostname }}"
+          username: "{{ NSXT.admin_user }}"
+          password: "{{ NSXT.admin_password }}"
+          validate_certs: "{{ NSXT.validate_certs }}"
+          display_name: "{{ NSXT.cc_a_hostswitch_uplink_name }}"
+          description: "Uplink Profile for Compute, created by Ansible automation"
+          resource_type: "UplinkHostSwitchProfile"
+          teaming:
+            active_list:
+            - uplink_name: "{{ NSXT.teaming_policy_link01 }}"
+              uplink_type: PNIC
+            - uplink_name: "{{ NSXT.teaming_policy_link02 }}"
+              uplink_type: PNIC              
+            policy: LOADBALANCE_SRCID
+          transport_vlan: "{{ NSXT.cc_a_trasnport_vlan }}"
+          state: "present"
+    - name: Create a Hostswitch Profile - COMPUTE-CLUSTER-B
+      nsxt_uplink_profiles:
+          hostname: "{{ NSXT.hostname }}"
+          username: "{{ NSXT.admin_user }}"
+          password: "{{ NSXT.admin_password }}"
+          validate_certs: "{{ NSXT.validate_certs }}"
+          display_name: "{{ NSXT.cc_b_hostswitch_uplink_name }}"
+          description: "Uplink Profile for Compute, created by Ansible automation"
+          resource_type: "UplinkHostSwitchProfile"
+          teaming:
+            active_list:
+            - uplink_name: "{{ NSXT.teaming_policy_link01 }}"
+              uplink_type: PNIC
+            - uplink_name: "{{ NSXT.teaming_policy_link02 }}"
+              uplink_type: PNIC              
+            policy: LOADBALANCE_SRCID
+          transport_vlan: "{{ NSXT.cc_b_trasnport_vlan }}"
+          state: "present"
+
+
+    - name: Create a Hostswitch Profile - EDGE
+      nsxt_uplink_profiles:
+          hostname: "{{ NSXT.hostname }}"
+          username: "{{ NSXT.admin_user }}"
+          password: "{{ NSXT.admin_password }}"
+          validate_certs: "{{ NSXT.validate_certs }}"
+          display_name: "{{ NSXT.edge_trasnport_uplink_name }}"
+          description: "Uplink Profile for EDGE, created by Ansible automation"
+          resource_type: "UplinkHostSwitchProfile"
+          teaming:
+            active_list:
+            - uplink_name: "{{ NSXT.teaming_policy_link01 }}"
+              uplink_type: PNIC
+            #standby_list:
+            #- uplink_name: "{{ NSXT.teaming_policy_link02 }}"
+            #  uplink_type: PNIC                       
+            policy: FAILOVER_ORDER         
+          named_teamings:
+          - name: "{{ NSXT.edge_named_teaming_policy_name_01 }}"
+            active_list:
+            - uplink_name: "{{ NSXT.teaming_policy_link01 }}"
+              uplink_type: PNIC
+            policy: "FAILOVER_ORDER"
+          - name: "{{ NSXT.edge_named_teaming_policy_name_02 }}"
+            active_list:
+            - uplink_name: "{{ NSXT.teaming_policy_link02 }}"
+              uplink_type: PNIC
+            policy: "FAILOVER_ORDER"
+          transport_vlan: "{{ NSXT.edge_trasnport_vlan }}"
+          state: "present"
+
+
+
+  

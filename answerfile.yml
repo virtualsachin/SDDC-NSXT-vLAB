@@ -1,0 +1,256 @@
+DEBUG:
+  KeepConfigFiles: false
+  KeepInstallerFiles: false
+  DisplayVariables: true
+  DisplayVariables_DNS: false
+  DisplayDelayInSeconds: 5
+
+# path to the ESXi Installer ISO
+esxIso: '/var/vmware/software/VMware/ESXi/v7.0.0U2A/VVMware-VMvisor-Installer-7.0U2a-17867351.x86_64.iso'
+#esxIso: '/root/ISOs/VMware-VMvisor-Installer-6.5.0-4887370.x86_64.iso'
+# path to vCenter installer ISO
+# path to ESXi ova file downlaoded from  http://vmwa.re/nestedesxi
+esxi_ova: '/home/ubuntu/Projects/Image/Nested_ESXi7.0u3_Appliance_Template_v1.ova'
+
+# configuration for accessing the existing physical ESXi
+physicalESXi:
+  host: 'esxi.itarchitect.sddc'
+  fqdn: 'vsphere.itarchitect.sddc'
+  user: 'root' 
+  password: 'G1r1jesh@477' 
+  phy_vds: 'PHY-ESXI-VDS'
+  mtu_size: 9000
+  pg_mgmt: 'ESXi-MGMT-P-DPG'
+  pg_mgmt_vlan: 0
+  pg_trunk: 'ESXi-TRUNK-P-DPG' # Trunk port group for LAB ESXi host in promiscuous mode.
+  pg_trunk_vlan: '0-4094'
+  cluster: 'Physical-Cluster'  # the cluster where physical ESXi is connected to. The nested VMs will be deployed in this cluster (physical esxi cluster)  
+  datastore: 'HDD'
+  datastore_ssd: 'SSD-480'
+  
+
+# if there is existing VC connected to the physical ESXi change the configuration here. If there is no existing VC the config must be the same as the vcenter section above (Below is the vCenter managing physical ESXi hosts)
+vCSA:
+  ip: '198.51.100.5' # if you have existing VC already deployed and connected to the physical ESX put the ip address here, otherwise it must be the same as the parameters in vcenter section above
+  name: 'vCSA'
+  fqdn: 'vcsa.itarchitect.sddc' 			# if you have existing VC already deployed and connected to the physical ESX put the existing VC VM name here, otherwise it must be the same as the parameters in vcenter section above
+  user: 'administrator@itarchitect.local' 
+  password: 'VMware1!' 
+  datacenter: 'Virtual-SDDC' 
+  datastore: 'HDD'
+  domain: 'itarchitect.sddc'
+  phy_vds: 'PHY-ESXI-VDS'
+
+#Infrastructure Information
+dns1: '198.51.100.1'
+dns2: '203.0.113.1'
+dns_server: '198.51.100.1'
+ntp_server: '198.51.100.1'
+syslog_server: '198.51.100.50'
+dns_domain: 'itarchitect.sddc'
+disk_mode: 'thin'
+default_password: 'VMware1!'
+parent_vm_folder: 'SDDC-NSX'
+nESXi_VM_folder: 'nESXi-VM' #/Virtual-SDDC/vm/nESXi-VM
+Infra_NSX_VM_folder: 'Infra-NSX-VMs' #/Virtual-SDDC/vm/Infra-NSX-VMs
+Infra_VM_folder: 'Infra-VMs' #/Virtual-SDDC/vm/Infra-VMs
+FirewallRules:        # ESXi host firewall rules to configure on all deployed ESXi hosts
+  - name: syslog
+    enabled: True
+    allowed_hosts:
+      all_ip: true
+
+# You can add, remove or rename the nested ESXi below, in this example the names will be esx1, esx2, etc ...
+Nested_Clusters:
+  nESXi_A_1:
+    name: 'nESXi-A-1'
+    vds_name: 'Compute-Cluster-A-VDS'
+    pg_mgmt_name: 'CC-A-MGMT-DPG'
+    pg_vmotion_name: 'CC-A-vMOTION-DPG'
+    pg_vsan_name: 'CC-A-vSAN-DPG'
+    pg_nfs_name: 'CC-A-NFS-DPG'
+    pg_uplink1_name: 'CC-A-EDGE-UPLINK-1-DPG'
+    pg_uplink2_name: 'CC-A-EDGE-UPLINK-2-DPG'
+    mng_cluster: 'PHYSICAL'   # the cluster where physical ESXi is connected to. The nested VMs will be deployed in this cluster (physical esxi cluster)  
+    cluster: 'Compute-Cluster-A' 			# the cluster where this specific nested ESXi need to be connected to
+    mgmt_hostname: 'esxi-a-1.itarchitect.sddc' #use ip if domain name is bot avaialable 
+    mgmt_ip: 10.1.0.11
+    mgmt_mask: 255.255.255.0
+    mgmt_gw: 10.1.0.1
+    mgmt_vlan: 10
+    vmotion_ip: 10.1.1.11	
+    vmotion_mask: 255.255.255.0	
+    vmotion_gw: 10.1.1.1
+    vmotion_vlan: 11
+    vsan_ip: 10.1.2.11	 		# even if you dont need vSAN put an IP address here otherwise the install will fail
+    vsan_mask: 255.255.255.0
+    vsan_gw: 10.1.2.1
+    vsan_vlan: 12
+
+  nESXi_A_2:
+    name: 'nESXi-A-2'
+    vds_name: 'Compute-Cluster-A-VDS'
+    pg_mgmt_name: 'CC-A-MGMT-DPG'
+    pg_vmotion_name: 'CC-A-vMOTION-DPG'
+    pg_vsan_name: 'CC-A-vSAN-DPG'
+    pg_nfs_name: 'CC-A-NFS-DPG'
+    pg_uplink1_name: 'CC-A-EDGE-UPLINK-1-DPG'
+    pg_uplink2_name: 'CC-A-EDGE-UPLINK-2-DPG'
+    mng_cluster: 'PHYSICAL' # the cluster where physical ESXi is connected to. The nested VMs will be deployed in this cluster (physical esxi cluster)  
+    cluster: 'Compute-Cluster-A' 			  # the cluster where this specific nested ESXi need to be connected to
+    mgmt_hostname: 'esxi-a-2.itarchitect.sddc' #use ip if domain name is bot avaialable 
+    mgmt_ip: 10.1.0.12
+    mgmt_mask: 255.255.255.0
+    mgmt_gw: 10.1.0.1
+    mgmt_vlan: 10 				# the external vlan id, need to have connectivity with the vCener
+    vmotion_ip: 10.1.1.12  
+    vmotion_mask: 255.255.255.0	
+    vmotion_gw: 10.1.1.1
+    vmotion_vlan: 11			# the external vlan id, need to have connectivity with the vCener, if not its fine 
+    vsan_ip: 10.1.2.12	 		# even if you dont need vSAN put an IP address here otherwise the install will fail
+    vsan_mask: 255.255.255.0
+    vsan_gw: 10.1.2.1
+    vsan_vlan: 12				# the external vlan id, need to have connectivity with the vCener, if not its fine
+
+  nESXi_B_1:
+    name: 'nESXi-B-1'
+    vds_name: 'Compute-Cluster-B-VDS'
+    pg_mgmt_name: 'CC-B-MGMT-DPG'
+    pg_vmotion_name: 'CC-B-vMOTION-DPG'
+    pg_vsan_name: 'CC-B-vSAN-DPG'
+    pg_nfs_name: 'CC-B-NFS-DPG'
+    pg_uplink1_name: 'CC-B-EDGE-UPLINK-1-DPG'
+    pg_uplink2_name: 'CC-B-EDGE-UPLINK-2-DPG'
+    mng_cluster: 'PHYSICAL' 	
+    cluster: 'Compute-Cluster-B' 			# the cluster where this specific nested ESXi need to be connected to
+    mgmt_hostname: 'esxi-b-1.itarchitect.sddc' #use ip if domain name is bot avaialable 
+    mgmt_ip: 10.2.0.11
+    mgmt_mask: 255.255.255.0
+    mgmt_gw: 10.2.0.1
+    mgmt_vlan: 20 				# the external vlan id, need to have connectivity with the vCener
+    vmotion_ip: 10.2.1.11	
+    vmotion_mask: 255.255.255.0	
+    vmotion_gw: 10.2.1.1
+    vmotion_vlan: 21			# the external vlan id, need to have connectivity with the vCener, if not its fine 
+    vsan_ip: 10.2.2.11	 		# even if you dont need vSAN put an IP address here otherwise the install will fail
+    vsan_mask: 255.255.255.0
+    vsan_gw: 10.2.2.1
+    vsan_vlan: 22				# the external vlan id, need to have connectivity with the vCener, if not its fine
+
+  nESX_B_2:
+    name: 'nESXi-B-2'
+    vds_name: 'Compute-Cluster-B-VDS'
+    pg_mgmt_name: 'CC-B-MGMT-DPG'
+    pg_vmotion_name: 'CC-B-vMOTION-DPG'
+    pg_vsan_name: 'CC-B-vSAN-DPG'
+    pg_nfs_name: 'CC-B-NFS-DPG'
+    pg_uplink1_name: 'CC-B-EDGE-UPLINK-1-DPG'
+    pg_uplink2_name: 'CC-B-EDGE-UPLINK-2-DPG'
+    mng_cluster: 'PHYSICAL' 	# the cluster where physical ESXi is connected to. The nested VMs will be deployed in this cluster (physical esxi cluster)  
+    cluster: 'Compute-Cluster-B'			# the cluster where this specific nested ESXi need to be connected to
+    mgmt_hostname: 'esxi-b-2.itarchitect.sddc' #use ip if domain name is bot avaialable 
+    mgmt_ip: 10.2.0.12
+    mgmt_mask: 255.255.255.0
+    mgmt_gw: 10.2.0.1
+    mgmt_vlan: 20 				# the external vlan id, need to have connectivity with the vCener
+    vmotion_ip: 10.2.1.12	
+    vmotion_mask: 255.255.255.0	
+    vmotion_gw: 10.2.1.1
+    vmotion_vlan: 11			# the external vlan id, need to have connectivity with the vCener, if not its fine 
+    vsan_ip: 10.2.2.12	 		# even if you dont need vSAN put an IP address here otherwise the install will fail
+    vsan_mask: 255.255.255.0
+    vsan_gw: 10.2.2.1
+    vsan_vlan: 22				# the external vlan id, need to have connectivity with the vCener, if not its fine
+
+
+## NSXT VARIABLES - DATA CENTER INFRASTRUCTURE ##
+NSXT:
+  name: 'NSXT-MGR-01' 
+  vm_name: 'NSXT-MGR-01'
+  hostname: 'NSXT-MGR-01'
+  fqdn: 'nsxt-mgr-01.itarchitect.sddc'
+  ova_path: '/home/ubuntu/Projects/Image/nsx-unified-appliance-3.1.3.0.0.18329005.ova' 
+  deployment_option: 'small'
+  disk_mode: 'thin'
+  ip: '198.51.100.21'
+  mask: '255.255.255.0'
+  gateway: '198.51.100.1'
+  role: 'NSX Manager'
+  datacenter: 'Virtual-SDDC'
+  datastore: 'SSD-480'
+  cluster: 'Physical-Cluster'
+  vm_folder: '/Virtual-SDDC/vm/Infra-NSX-VMs'
+  port_group: 'ESXi-MGMT-DPG' 
+  audit_user: 'audit'
+  admin_user: 'admin'
+  audit_password: 'VMware1!VMware1!'
+  admin_password: 'VMware1!VMware1!'
+  password_password: 'VMware1!VMware1!'
+  compute_manager_display_name: 'vCSA'
+  compute_manager_credential_type: 'UsernamePasswordLoginCredential'
+  validate_certs: False
+  ssh: True
+## NSXT VARIABLES - INFRASTRUCTURE ##
+  tz_compute_overlay_name: 'TZ-COMPUTE-OVERLAY'
+  tz_compute_vlan_name: 'TZ-COMPUTE-VLANs'
+  tz_edge_vlan_name: 'TZ-EDGE-VLANs'
+## NSXT VARIABLES FOR COMPUTE and EDGE CLUSTERS 
+  ipv4pool_tep_cc_a_name: 'IPPool-IPV4-TEP-COMPUTE-A'
+  ipv4pool_tep_cc_a_start: 10.1.5.11
+  ipv4pool_tep_cc_a_end: 10.1.5.49
+  ipv4pool_tep_cc_a_cidr: 10.1.5.0/24
+  ipv4pool_tep_cc_a_gw: 10.1.5.1
+  cc_a_trasnport_vlan:  15
+  cc_a_hostswitch_uplink_name: 'COMPUTE-A-UPLINK'
+  cc_a_tnp_name: 'TNP-COMPUTE-A'
+  cc_a_hostswitch_vds_name: "{{Nested_Clusters.nESXi_A_1.vds_name }}"
+  cc_a_cluster_name: "{{ Nested_Clusters.nESXi_A_1.cluster }}"
+  
+  ipv4pool_tep_cc_b_name: IPPool-IPV4-TEP-COMPUTE-B'
+  ipv4pool_tep_cc_b_start: 10.2.5.11
+  ipv4pool_tep_cc_b_end: 10.2.5.49
+  ipv4pool_tep_cc_b_cidr: 10.2.5.0/24
+  ipv4pool_tep_cc_b_gw:  10.2.5.1
+  cc_b_trasnport_vlan: 25
+  cc_b_hostswitch_uplink_name: 'COMPUTE-B-UPLINK'
+  cc_b_tnp_name: 'TNP-COMPUTE-B'
+  cc_b_hostswitch_vds_name: "{{ Nested_Clusters.nESXi_B_1.vds_name }}"
+  cc_b_cluster_name: "{{ Nested_Clusters.nESXi_B_1.cluster }}"
+  teaming_policy_link01: 'Uplink 1' #Uplinks are created as Uplink 1, Uplink 2, etc. pp. by default.
+  teaming_policy_link02: 'Uplink 2'
+  ipv4pool_tep_edge_name: 'IPPool-IPV4-TEP-EDGE'
+  ipv4pool_tep_edge_start: 10.5.5.11
+  ipv4pool_tep_edge_end: 10.5.5.49
+  ipv4pool_tep_edge_cidr: 10.5.5.0/24
+  ipv4pool_tep_edge_gw:  10.5.5.1
+  edge_trasnport_vlan:  55
+  edge_trasnport_uplink_name: 'EDGE-UPLINK'
+  edge_named_teaming_policy_name_01 : 'TOR-01'
+  edge_named_teaming_policy_name_02 : 'TOR-02'
+  edge_mtu: "{{ physicalESXi.mtu_size }}"
+  edge_uplink_teaming_policies: ['TOR-01', 'TOR-02']
+  edge_nvds_name: 'EDGE-NVDS'
+  edge_pg_data: "{{ physicalESXi.pg_trunk }}"
+  edge_pg_management: "{{ physicalESXi.pg_mgmt }}"
+  edge_gateway: 198.51.100.1
+  edge_prefix: 24
+  edge_01_name: 'NSXT-EDGE-01'
+  edge_02_name: 'NSXT-EDGE-02'
+  edge_03_name: 'NSXT-EDGE-03'
+  edge_04_name: 'NSXT-EDGE-04'
+  edge_05_name: 'NSXT-EDGE-05'
+  edge_06_name: 'NSXT-EDGE-06'
+  edge_01_ip: 198.51.100.25
+  edge_02_ip: 198.51.100.26
+  edge_03_ip: 198.51.100.27
+  edge_04_ip: 198.51.100.28
+  edge_05_ip: 198.51.100.29
+  edge_06_ip: 198.51.100.30
+  edge_cluster_01: 'EDGE-Cluster-01'
+  edge_cluster_02: 'EDGE-Cluster-02'
+  edge_cluster_03: 'EDGE-Cluster-03'
+  edge_formfactor: 'MEDIUM'
+  edge_data_networks_TOR_01: "EDGE-TRUNK-TOR-01-DPG"
+  edge_data_networks_TOR_02: "EDGE-TRUNK-TOR-02-DPG"
+
+#end 

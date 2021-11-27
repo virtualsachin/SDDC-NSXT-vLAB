@@ -1,0 +1,36 @@
+##
+##    Project: SDDC-NSXT-LAB
+##    Authors: Sachin Kumar Sharma
+##    Filename: playbooks/12-register-compute-manager.yml 
+##    Purpose: This Ansbile script is to Register vCenter as a compute manager in NSX-T
+##
+##
+---
+- hosts: localhost
+  name: Register vCenter as a compute manager in NSX-T
+  gather_facts: false
+  vars_files: ../answerfile.yml
+
+  tasks:
+    - name: registerNsxComputeManager_Playbook
+      ansible.builtin.debug:
+        msg: "Starting playbook: {{ ansible_play_name }}"
+   
+    - name: Register compute manager to NSX Manager
+      nsxt_fabric_compute_managers:
+          hostname: "{{ NSXT.hostname }}"
+          username: "{{ NSXT.admin_user }}"
+          password: "{{ NSXT.admin_password }}"
+          validate_certs: "{{ NSXT.validate_certs }}"
+          display_name: "{{ vCSA.name }}"  # Using VMName as no need for full domain
+          server: "{{ vCSA.fqdn }}"
+          origin_type: vCenter
+          #create_service_account: true
+          #Enable Trust: true
+          credential:
+            credential_type: "UsernamePasswordLoginCredential"
+            username: "{{ vCSA.user }}"
+            password: "{{ vCSA.password }}"
+          state: present
+          
+

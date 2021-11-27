@@ -1,0 +1,56 @@
+##
+##    Project: SDDC-NSXT-LAB
+##    Authors: Sachin Kumar Sharma
+##    Filename: playbooks/01-deployNestedESXi.yml
+##    Purpose: This Ansbile script is to installed the Nested ESXi hosts on physical environment
+##    the ESXi OVA has been downloaded from https://williamlam.com/nested-virtualization/nested-esxi-virtual-appliance
+##
+##
+---
+- name: Configure vESX
+  hosts: localhost
+  gather_facts: False
+  vars_files:
+    - ../answerfile.yml
+  tasks:
+    - name: deployNestedEsxi_Playbook
+      ansible.builtin.debug:
+        msg: "Starting playbook: {{ ansible_play_name }}"
+
+    - name: Deploy nested ESXi from OVA for Cluster-A
+      community.vmware.vmware_deploy_ovf:
+        hostname: "{{ vCSA.ip }}"
+        username: "{{ vCSA.user }}" 
+        password: "{{ vCSA.password }}"
+        datacenter: "{{ vCSA.datacenter }}"
+        validate_certs: no
+        name: "{{ item.value.name }}"
+        folder: "/Virtual-SDDC/vm/SDDC-NSXT-LAB/nESXi-VM"
+        cluster: "{{ physicalESXi.cluster }}"
+        datastore: "{{ physicalESXi.datastore }}"
+        disk_provisioning: "{{ disk_mode }}"
+        networks:  
+          "VM Network": "{{ physicalESXi.pg_trunk }}"
+        ova: "{{ esxi_ova }}"
+        allow_duplicates: yes
+        power_on: yes
+        fail_on_spec_warnings: no
+        wait: yes
+        wait_for_ip_address: yes
+        inject_ovf_env: yes
+        properties:
+          guestinfo.hostname: "{{ item.value.mgmt_hostname }}"
+          guestinfo.ipaddress: "{{ item.value.mgmt_ip }} "
+          guestinfo.netmask: "{{ item.value.mgmt_mask }}"
+          guestinfo.gateway: "{{ item.value.mgmt_gw }}"
+          guestinfo.vlan: "{{ item.value.mgmt_vlan }}"
+          guestinfo.dns: "{{ dns_server }}"
+          guestinfo.domain: "{{ dns_domain }}"
+          guestinfo.ntp: "{{ ntp_server }}"
+          guestinfo.syslog: "{{ syslog_server }}"
+          guestinfo.password: "{{ default_password }}"
+          guestinfo.ssh: "True"
+          guestinfo.createvmfs: "False"
+      with_dict: "{{ Nested_Clusters }}"
+
+   

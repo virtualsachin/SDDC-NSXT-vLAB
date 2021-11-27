@@ -1,0 +1,115 @@
+##
+##    Project: SDDC-NSXT-LAB
+##    Authors: Sachin Kumar Sharma
+##    Filename: playbooks/19-deploy-edgenodes.yml
+##    Purpose: This Ansbile script is to Deploy and configure NSX-T 3.0 Edge transport nodes
+##
+##
+---
+- hosts: localhost
+  name: Deploy and configure NSX-T 3.0 Edge transport nodes
+  gather_facts: false
+  vars_files: ../answerfile.yml
+
+  tasks:
+    - name: deploy-edgenodes_Playbook
+      ansible.builtin.debug:
+        msg: "Starting playbook: {{ ansible_play_name }}"
+
+    - name: Deploy and configure NSX-T 3.0 Edge transport nodes - EDGE 01
+      nsxt_transport_nodes:
+        hostname: "{{ NSXT.hostname }}"
+        username: "{{ NSXT.admin_user }}"
+        password: "{{ NSXT.admin_password }}"
+        validate_certs: "{{ NSXT.validate_certs }}"
+        display_name: "{{ NSXT.edge_01_name }}" # TO UPDATE
+        description: "Edge transport node created from Ansible Automation"
+        host_switch_spec:
+          resource_type: "StandardHostSwitchSpec"
+          host_switches:
+          - host_switch_profiles:
+            - name: "{{ NSXT.edge_trasnport_uplink_name }}"
+              type: "UplinkHostSwitchProfile"
+            host_switch_name: "EDGE-NVDS"
+            host_switch_mode: "STANDARD"
+            host_switch_type: "NVDS"
+            pnics:
+            - device_name: "fp-eth0"
+              uplink_name: "Uplink 1"
+            - device_name: "fp-eth1"
+              uplink_name: "Uplink 2" 
+            ip_assignment_spec:
+              resource_type: "StaticIpPoolSpec"
+              ip_pool_name: "{{ NSXT.ipv4pool_tep_edge_name }}"
+            transport_zone_endpoints:
+              - transport_zone_name: "{{ NSXT.tz_compute_overlay_name }}"
+              - transport_zone_name: "{{ NSXT.tz_edge_vlan_name }}"
+        node_deployment_info:
+            resource_type: "EdgeNode"
+            display_name: "{{ NSXT.edge_01_name }}"  # TO UPDATE
+            #ip_addresses:
+            deployment_config:
+              form_factor: "{{ NSXT.edge_formfactor }}"
+              node_user_settings:
+                cli_password: "{{ NSXT.password_password }}"
+                root_password: "{{ NSXT.password_password }}"
+              vm_deployment_config:
+                allow_ssh_root_login: true
+                enable_ssh: true
+                placement_type: VsphereDeploymentConfig
+                vc_name: "{{ vCSA.name }}"
+                vc_username: "{{ vCSA.user }}"
+                vc_password: "{{ vCSA.password }}"        
+                data_networks:
+                - "{{ NSXT.edge_data_networks_TOR_01 }}"
+                - "{{ NSXT.edge_data_networks_TOR_02 }}"
+                management_network: "{{ physicalESXi.pg_mgmt }}"
+                management_port_subnets:
+                - ip_addresses:
+                  - "{{ NSXT.edge_01_ip }}" # TO UPDATE
+                  prefix_length: "{{ NSXT.edge_prefix }}"
+                  
+                default_gateway_addresses:
+                  - "{{ NSXT.edge_gateway }}"
+                hostname: "{{ NSXT.edge_01_name }}"   # TO UPDATE
+                compute: "{{ physicalESXi.cluster }}"
+                storage: "{{ physicalESXi.datastore_ssd }}"
+                host: "{{ physicalESXi.fqdn }}"
+        state: present
+
+    - name: Wait until the NSX-T API reports that no Edge Transport Nodes are in "PENDING" state
+      ansible.builtin.uri:
+        url: https://{{ NSXT.fqdn }}/api/v1/transport-nodes/state?status=PENDING
+        validate_certs: no
+        timeout: 10
+        force_basic_auth: yes
+        url_username: "{{ NSXT.admin_user  }}"
+        url_password: "{{ NSXT.admin_password }}"
+        method: GET
+        body_format: json
+        return_content: yes
+        status_code: 200
+      register: result
+      until: (result.json.result_count | default(1))  == 0
+      retries: 90
+      delay: 60
+
+
+    - name: Wait until the NSX-T API reports that no Edge Transport Nodes are in "IN_PROGRESS" state
+      ansible.builtin.uri:
+        url: https://{{ NSXT.fqdn }}/api/v1/transport-nodes/state?status=IN_PROGRESS
+        validate_certs: no
+        timeout: 10
+        force_basic_auth: yes
+        url_username: "{{ NSXT.admin_user }}"
+        url_password: "{{ NSXT.admin_password }}"
+        method: GET
+        body_format: json
+        return_content: yes
+        status_code: 200
+      register: result
+      until: (result.json.result_count | default(1)) == 0
+      retries: 90
+      delay: 60
+
+   

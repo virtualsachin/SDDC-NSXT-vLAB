@@ -1,0 +1,41 @@
+---
+- name: Test play
+  hosts: localhost
+  gather_facts: False
+  vars_files:
+    - ../answerfile.yml
+  tasks:
+    - name: Wait until the NSX-T API reports that no Edge Transport Nodes are in "PENDING" state
+      ansible.builtin.uri:
+        url: https://{{ NSXT.fqdn }}/api/v1/transport-nodes/state?status=PENDING
+        validate_certs: no
+        timeout: 10
+        force_basic_auth: yes
+        url_username: "{{ NSXT.admin_user  }}"
+        url_password: "{{ NSXT.admin_password }}"
+        method: GET
+        body_format: json
+        return_content: yes
+        status_code: 200
+      register: result
+      until: (result.json.result_count | default(1))  == 0
+      retries: 90
+      delay: 60
+
+
+    - name: Wait until the NSX-T API reports that no Edge Transport Nodes are in "IN_PROGRESS" state
+      ansible.builtin.uri:
+        url: https://{{ NSXT.fqdn }}/api/v1/transport-nodes/state?status=IN_PROGRESS
+        validate_certs: no
+        timeout: 10
+        force_basic_auth: yes
+        url_username: "{{ NSXT.admin_user }}"
+        url_password: "{{ NSXT.admin_password }}"
+        method: GET
+        body_format: json
+        return_content: yes
+        status_code: 200
+      register: result
+      until: (result.json.result_count | default(1)) == 0
+      retries: 90
+      delay: 60

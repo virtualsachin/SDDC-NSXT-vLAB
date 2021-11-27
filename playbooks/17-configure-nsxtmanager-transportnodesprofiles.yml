@@ -1,0 +1,77 @@
+##
+##    Project: SDDC-NSXT-LAB
+##    Authors: Sachin Kumar Sharma
+##    Filename: playbooks/17-configure-nsxtmanager-transportnodesprofiles.yml
+##    Purpose: This Ansbile script is to Create NSX-T Transport Zones Overlay & VLAN for COMPUTE and EDGE NODES
+##
+##
+---
+- hosts: localhost
+  name: Create Transport Node Profile - COMPUTE Clusters
+  gather_facts: false
+  vars_files: ../answerfile.yml
+
+  tasks:
+    - name: configure-nsxtmanager-transportnodesprofiles_Playbook
+      ansible.builtin.debug:
+        msg: "Starting playbook: {{ ansible_play_name }}"
+
+    - name: Create Transport Node Profile - COMPUTE-CLUSTER-A
+      nsxt_transport_node_profiles:
+        hostname: "{{ NSXT.hostname }}"
+        username: "{{ NSXT.admin_user }}"
+        password: "{{ NSXT.admin_password }}"
+        validate_certs: "{{ NSXT.validate_certs }}"
+        resource_type: "TransportNodeProfile"
+        display_name: "{{ NSXT.cc_a_tnp_name }}"
+        description: "Ansible provisionned - Uplink Profile  - Compute"
+        host_switch_spec:
+          resource_type: "StandardHostSwitchSpec"
+          host_switches:
+          - host_switch_profiles:
+            - name: "{{ NSXT.cc_a_hostswitch_uplink_name }}"
+              type: "UplinkHostSwitchProfile"
+            host_switch_name: "{{ NSXT.cc_a_hostswitch_vds_name }}"
+            host_switch_mode: "STANDARD"
+            host_switch_type: VDS            
+            uplinks:
+            - uplink_name: "Uplink 1"
+              vds_uplink_name: "Uplink 1"
+            - uplink_name: "Uplink 2"
+              vds_uplink_name: "Uplink 2"             
+            ip_assignment_spec:
+              resource_type: "StaticIpPoolSpec"
+              ip_pool_name: "{{ NSXT.ipv4pool_tep_cc_a_name }}"
+            transport_zone_endpoints:
+            - transport_zone_name: "{{ NSXT.tz_compute_overlay_name }}"
+        state: "present"
+
+    - name: Create Transport Node Profile - COMPUTE-CLUSTER-B
+      nsxt_transport_node_profiles:
+        hostname: "{{ NSXT.hostname }}"
+        username: "{{ NSXT.admin_user }}"
+        password: "{{ NSXT.admin_password }}"
+        validate_certs: "{{ NSXT.validate_certs }}"
+        resource_type: "TransportNodeProfile"
+        display_name: "{{ NSXT.cc_b_tnp_name }}"
+        description: "Ansible provisionned - Uplink Profile  - Compute"
+        host_switch_spec:
+          resource_type: "StandardHostSwitchSpec"
+          host_switches:
+          - host_switch_profiles:
+            - name: "{{ NSXT.cc_b_hostswitch_uplink_name }}"
+              type: "UplinkHostSwitchProfile"
+            host_switch_name: "{{ NSXT.cc_b_hostswitch_vds_name }}"
+            host_switch_mode: "STANDARD"
+            host_switch_type: VDS            
+            uplinks:
+            - uplink_name: "Uplink 1"
+              vds_uplink_name: "Uplink 1"
+            - uplink_name: "Uplink 2"
+              vds_uplink_name: "Uplink 2"             
+            ip_assignment_spec:
+              resource_type: "StaticIpPoolSpec"
+              ip_pool_name: "{{ NSXT.ipv4pool_tep_cc_b_name }}"
+            transport_zone_endpoints:
+            - transport_zone_name: "{{ NSXT.tz_compute_overlay_name }}"
+        state: "present"

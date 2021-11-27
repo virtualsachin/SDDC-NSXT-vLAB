@@ -1,0 +1,67 @@
+##
+##    Project: SDDC-NSXT-LAB
+##    Authors: Sachin Kumar Sharma
+##    Filename: playbooks/18-configure-nsxtmanager-transportnodes.yml
+##    Purpose: This Ansbile script is to Prepared Compute Cluster/Hosts for NSXT transport node collection
+##
+##
+---
+- hosts: localhost
+  name: Prepared Compute Cluster/Hosts for NSXT transport node collection
+  gather_facts: false
+  vars_files: ../answerfile.yml
+
+  tasks:
+    - name: configure-nsxtmanager-transportnodes_Playbook
+      ansible.builtin.debug:
+        msg: "Starting playbook: {{ ansible_play_name }}"
+
+    - name: Create transport node collection for COMPUTE-A
+      nsxt_transport_node_collections:
+        hostname: "{{ NSXT.hostname }}"
+        username: "{{ NSXT.admin_user }}"
+        password: "{{ NSXT.admin_password }}"
+        validate_certs: "{{ NSXT.validate_certs }}"
+        display_name: "TNC-A"
+        resource_type: "TransportNodeCollection"
+        description: "Transport Node Collections 1"
+        compute_manager_name: "{{ NSXT.compute_manager_display_name }}"
+        cluster_name: "{{ NSXT.cc_a_cluster_name }}"
+        transport_node_profile_name: "{{ NSXT.cc_a_tnp_name }}"
+        state: "present"
+    - name: Create transport node collection for COMPUTE-B
+      nsxt_transport_node_collections:
+        hostname: "{{ NSXT.hostname }}"
+        username: "{{ NSXT.admin_user }}"
+        password: "{{ NSXT.admin_password }}"
+        validate_certs: "{{ NSXT.validate_certs }}"
+        display_name: "TNC-B"
+        resource_type: "TransportNodeCollection"
+        description: "Transport Node Collections for COMPUTE NODES"
+        compute_manager_name: "{{ NSXT.compute_manager_display_name }}"
+        cluster_name: "{{ NSXT.cc_b_cluster_name }}"
+        transport_node_profile_name: "{{ NSXT.cc_b_tnp_name }}"
+        state: "present"
+
+    
+    - name: Pause a little bit to allow the timefor NSXT host preparation
+      pause: 
+        minutes: 2
+      
+    - name: Wait until the NSX-T API reports that the Transport Zones are in "UP" state
+      ansible.builtin.uri:
+        url: https://{{ NSXT.fqdn }}/api/v1/transport-zones/status
+        validate_certs: no
+        timeout: 10
+        force_basic_auth: yes
+        url_username: "{{ NSXT.admin_user }}"
+        url_password: "{{ NSXT.admin_password }}"
+        method: GET
+        body_format: json
+        return_content: yes
+        status_code: 200
+      register: result
+      until: (result.json.up_count | default(0)) > 0
+      retries: 20
+      delay: 60
+      

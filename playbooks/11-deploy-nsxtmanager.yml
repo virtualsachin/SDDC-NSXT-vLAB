@@ -1,0 +1,122 @@
+##
+##    Project: SDDC-NSXT-LAB
+##    Authors: Sachin Kumar Sharma
+##    Filename: playbooks/11-deploy-nsxtmanager.yml
+##    Purpose: This Ansbile script is to installed the NSXT Manager on physical host
+##
+##
+---
+- hosts: localhost
+  name: Deploy the NSX Manager to a vCenter environment
+  gather_facts: false
+  vars_files:
+    - ../answerfile.yml
+  tasks:
+    - name: deployNsxManager_Playbook
+      ansible.builtin.debug:
+        msg: "Starting playbook: {{ ansible_play_name }}"
+
+
+    - name: Deploy NSX-T Local Manager from OVA
+      community.vmware.vmware_deploy_ovf:
+        hostname: "{{ vCSA.ip }}"
+        username: "{{ vCSA.user }}"
+        password: "{{ vCSA.password }}"
+        name: "{{ NSXT.name }}" # Virtual Machine name in ESXI, not FQDN
+        ovf: "{{ NSXT.ova_path }}"
+        wait_for_ip_address: true
+        wait: yes
+        validate_certs: no
+        allow_duplicates: no
+        fail_on_spec_warnings: yes
+        inject_ovf_env: true
+        power_on: yes
+        datastore: "{{ NSXT.datastore }}"
+        datacenter: "{{ NSXT.datacenter }}"
+        cluster: "{{ NSXT.cluster }}"
+        folder: "{{ vCSA.datacenter }}/vm/{{ parent_vm_folder }}/{{ Infra_VM_folder }}"    #For vCenter deployment, VM Folder path must be the FULL path: /<DataCenter>/vm/<ParentFolder>/<ChildFolder>
+        deployment_option: "{{ NSXT.deployment_option }}"
+        disk_provisioning: "{{ NSXT.disk_mode }}"
+        networks: 
+          "Network 1": "{{ NSXT.port_group }}"
+        properties:
+          nsx_allowSSHRootLogin: yes
+          nsx_cli_audit_passwd_0: "{{ NSXT.audit_password }}"
+          nsx_cli_audit_username: "{{ NSXT.audit_user }}"
+          nsx_cli_passwd_0: "{{ NSXT.admin_password }}"
+          nsx_cli_username: "{{ NSXT.admin_user }}"
+          nsx_dns1_0: "{{ dns1 }}"
+          nsx_dns2_0: "{{ dns2 }}"
+          nsx_domain_0: "{{ dns_domain }}"
+          nsx_gateway_0: "{{ NSXT.gateway }}"
+          nsx_hostname: "{{ NSXT.hostname }}"
+          nsx_ip_0: "{{ NSXT.ip }}"
+          nsx_isSSHEnabled: "{{ NSXT.ssh }}"
+          nsx_netmask_0: "{{ NSXT.mask }}"
+          nsx_ntp_0: "{{ ntp_server }}"
+          nsx_passwd_0: "{{ NSXT.password_password }}"
+          nsx_role: "{{ NSXT.role }}"
+      delegate_to: localhost
+      register: deployment
+
+    - name: Wait 3 seconds before start checking whether the NSX-T Manager node is ready
+      ansible.builtin.pause: seconds=3
+      when: 
+        - deployment.changed == true
+    - name: Result check for NSX-T Manager node deployment
+      ansible.builtin.async_status:
+        jid: "{{ item.ansible_job_id }}"
+      register: job_result
+      with_items: "{{ deployment.results }}"
+      when:
+        - deployment.changed == true
+        - item.started is defined
+    - name: Wait until the NSX-T API reports that the NSX-T Manager cluster is "STABLE"
+      ansible.builtin.uri:
+        url: https://{{ NSXT.fqdn }}/api/v1/cluster/status
+        validate_certs: no
+        timeout: 5
+        force_basic_auth: yes
+        url_username: "{{ NSXT.admin_user }}"
+        url_password: "{{ NSXT.admin_password }}"
+        method: GET
+        body_format: json
+        return_content: yes
+        status_code: 200
+      register: result
+      until: result.status == 200 and result.json.detailed_cluster_status.overall_status == "STABLE"
+      retries: 60
+      delay: 60
+
+
+
+##
+## Disable Password Expiration for all users except for root (API does not permit disabling for 'root' user)
+##
+    - name: Obtain NSX-T Local Manager User List
+      ansible.builtin.uri:
+        url: https://{{ NSXT.fqdn | lower }}/api/v1/node/users
+        validate_certs: no
+        timeout: 15
+        force_basic_auth: yes
+        url_username: "{{ NSXT.admin_user }}"
+        url_password: "{{ NSXT.admin_password }}"
+        method: GET
+        body_format: json
+        return_content: yes
+        status_code: 200
+      register: UserList
+    - name: Disable Password Expiration Of All NSX-T Users (except for 'root')
+      ansible.builtin.uri:
+        url: https://{{ NSXT.fqdn | lower }}/api/v1/node/users/{{ item.userid }}
+        validate_certs: no
+        timeout: 15
+        force_basic_auth: yes
+        url_username: "{{ NSXT.admin_user }}"
+        url_password: "{{ NSXT.admin_password }}"
+        method: PUT
+        body_format: json
+        body: '{ "password_change_frequency": 0 }'
+        return_content: yes
+        status_code: 200
+      loop: "{{ UserList.json.results }}"

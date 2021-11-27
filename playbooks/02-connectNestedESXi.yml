@@ -1,0 +1,58 @@
+##
+##    Project: SDDC-NSXT-LAB
+##    Authors: Sachin Kumar Sharma
+##    Filename: playbooks/02-connectNestedESXi.yml
+##    Purpose: This Ansbile script is to connect the Nested ESXi hosts to vCenter
+
+---
+- name: Connect Nested ESXi Hosts to the vCenter
+  hosts: localhost
+  gather_facts: False
+  vars_files:
+    - ../answerfile.yml
+  tasks:
+    - name: connectNestedESXi_Playbook
+      ansible.builtin.debug:
+        msg: "Starting playbook: {{ ansible_play_name }}"
+    - name: Check if the nested ESXi hosts are ready
+      community.vmware.vmware_guest_info:
+        hostname: "{{ vCSA.ip }}"
+        username: "{{ vCSA.user}}"
+        password: "{{ vCSA.password }}"
+        validate_certs: false
+        datacenter: "{{ vCSA.datacenter }}"
+        name: "{{ item.value.name }}"
+        schema: "vsphere"
+      register: vm_facts
+      until: vm_facts is search(item.value.mgmt_ip)
+      retries: 15
+      delay: 60
+      with_dict: "{{ Nested_Clusters}}"
+
+    - name: Add ESXi Host to VCSA for Nested ESXi hosts
+      community.vmware.vmware_host:
+        hostname: "{{ vCSA.ip }}"
+        username: "{{ vCSA.user }}"
+        password: "{{ vCSA.password }}"
+        datacenter_name: "{{ vCSA.datacenter }}"
+        validate_certs: false
+        cluster_name: "{{ item.value.cluster }}"
+        esxi_hostname: "{{ item.value.mgmt_hostname }}"
+        esxi_username: "root"
+        esxi_password: "{{ default_password }}"
+        state: present
+      with_dict: "{{ Nested_Clusters}}"
+
+##
+## Nested ESXi host deployment complete, so below we apply configuration settings to the ESXi hosts
+##
+
+    - name: Configure deployed ESXi hosts firewall to permit syslog traffic
+      community.vmware.vmware_host_firewall_manager:
+        hostname: "{{ vCSA.ip }}"
+        username: "{{ vCSA.user }}"
+        password: "{{ vCSA.password }}"
+        validate_certs: false
+        cluster_name: "{{ item.value.cluster }}"
+        rules: "{{ FirewallRules }}"
+      with_dict: "{{ Nested_Clusters}}"

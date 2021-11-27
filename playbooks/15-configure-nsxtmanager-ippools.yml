@@ -1,0 +1,82 @@
+##
+##    Project: SDDC-NSXT-LAB
+##    Authors: Sachin Kumar Sharma
+##    Filename: playbooks/15-configure-nsxtmanager-ippools.yml  
+##    Purpose: This Ansbile script is to Create IP Pools for Compute and EDGE NODE TEP
+##
+##
+---
+- hosts: localhost
+  name: Create IP Pools for Compute and EDGE NODE TEP
+  gather_facts: false
+  vars_files: ../answerfile.yml
+
+  tasks:
+    - name: createNsxIpPool_Playbook
+      ansible.builtin.debug:
+        msg: "Starting playbook: {{ ansible_play_name }}"
+    - name: create IP Pool - IPPool-IPV4-TEP-COMPUTE-CLUSTER-A
+      nsxt_policy_ip_pool:
+        hostname: "{{ NSXT.hostname }}"
+        username: "{{ NSXT.admin_user }}"
+        password: "{{ NSXT.admin_password }}"
+        validate_certs: "{{ NSXT.validate_certs }}"
+        #id: test-ip-pool
+        display_name: "{{ NSXT.ipv4pool_tep_cc_a_name }}"
+        description: "Ansible provisionned - IP Pool - TEP Compute-A"
+        state: "present"
+        tags:
+        - tag: "TEP-COMPUTE"
+          scope: "IP_POOL"
+        pool_static_subnets:
+          - id: "{{ NSXT.ipv4pool_tep_cc_a_name }}"
+            state: "present"
+            allocation_ranges:
+              - start: "{{ NSXT.ipv4pool_tep_cc_a_start }}"
+                end: "{{ NSXT.ipv4pool_tep_cc_a_end }}"
+            cidr: "{{ NSXT.ipv4pool_tep_cc_a_cidr }}"
+            gateway_ip: "{{ NSXT.ipv4pool_tep_cc_a_gw }}"
+##Copy the below code for any additional clusters for unique DVS, also add the variables
+    - name: create IP Pool - IPPool-IPV4-TEP-COMPUTE-CLUSTER-B
+      nsxt_policy_ip_pool:
+        hostname: "{{ NSXT.hostname }}"
+        username: "{{ NSXT.admin_user }}"
+        password: "{{ NSXT.admin_password }}"
+        validate_certs: "{{ NSXT.validate_certs }}"
+        #id: test-ip-pool
+        display_name: "{{ NSXT.ipv4pool_tep_cc_b_name }}"
+        description: "Ansible provisionned - IP Pool - TEP Compute-A"
+        state: "present"
+        tags:
+        - tag: "TEP-COMPUTE"
+          scope: "IP_POOL"
+        pool_static_subnets:
+          - id: "{{ NSXT.ipv4pool_tep_cc_b_name }}"
+            state: "present"
+            allocation_ranges:
+              - start: "{{ NSXT.ipv4pool_tep_cc_b_start }}"
+                end: "{{ NSXT.ipv4pool_tep_cc_b_end }}"
+            cidr: "{{ NSXT.ipv4pool_tep_cc_b_cidr }}"
+            gateway_ip: "{{ NSXT.ipv4pool_tep_cc_b_gw }}"
+
+    - name: create IP Pool - IPPool-IPV4-TEP-EDGE
+      nsxt_policy_ip_pool:
+        hostname: "{{ NSXT.hostname }}"
+        username: "{{ NSXT.admin_user }}"
+        password: "{{ NSXT.admin_password }}"
+        validate_certs: "{{ NSXT.validate_certs }}"
+        #id: test-ip-pool
+        display_name: "{{ NSXT.ipv4pool_tep_edge_name }}"
+        description: "Ansible provisionned - IP Pool - TEP Edge"
+        state: "present"
+        tags:
+        - tag: "TEP-EDGE"
+          scope: "IP_POOL"
+        pool_static_subnets:
+          - id: IPPool-IPV4-TEP-EDGE
+            state: "present"
+            allocation_ranges:
+              - start: "{{ NSXT.ipv4pool_tep_edge_start }}"
+                end: "{{ NSXT.ipv4pool_tep_edge_end }}"
+            cidr: "{{ NSXT.ipv4pool_tep_edge_cidr }}"
+            gateway_ip: "{{ NSXT.ipv4pool_tep_edge_gw }}"
