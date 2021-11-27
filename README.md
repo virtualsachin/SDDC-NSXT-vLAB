@@ -22,12 +22,12 @@ master branch is updated for vSphere 7.0.
 
 ### Dependencies
 
-apt-get install sshpass python-pip git <br/>
-pip install vim <br/>
-pip install pyvmomi <br/>
-https://github.com/virtualsachin/SDDC-NSXT-vLAB.git <br/>
+Install the required software on your Ansible controller:
 
-Place the ESXi and VCSA ISOs in /root/ISOs <br/>
+sudo apt install python3 python3-pip xorriso git
+sudo pip3 install ansible pyvim pyvmomi netaddr jmespath dnspython
+ansible-galaxy collection install community.general community.vmware ansible.posix
+git clone https://github.com/rutgerblom/SDDC.Lab.git
 
 
 ### Edit answersfile.yml
