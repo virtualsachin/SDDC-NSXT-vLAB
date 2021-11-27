@@ -24,10 +24,10 @@ master branch is updated for vSphere 7.0.
 
 Install the required software on your Ansible controller:
 
-sudo apt install python3 python3-pip xorriso git
-sudo pip3 install ansible pyvim pyvmomi netaddr jmespath dnspython
-ansible-galaxy collection install community.general community.vmware ansible.posix
-git clone https://github.com/rutgerblom/SDDC.Lab.git
+sudo apt install python3 python3-pip xorriso git<br/>
+sudo pip3 install ansible pyvim pyvmomi netaddr jmespath dnspython<br/>
+ansible-galaxy collection install community.general community.vmware ansible.posix<br/>
+git clone https://github.com/rutgerblom/SDDC.Lab.git<br/>
 
 
 ### Edit answersfile.yml
