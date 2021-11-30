@@ -17,7 +17,7 @@ physicalESXi:
   host: 'esxi.itarchitect.sddc'
   fqdn: 'vsphere.itarchitect.sddc'
   user: 'root' 
-  password: 'G1r1jesh@477' 
+  password: 'VMware1!' 
   phy_vds: 'PHY-ESXI-VDS'
   mtu_size: 9000
   pg_mgmt: 'ESXi-MGMT-P-DPG'
